@@ -1,0 +1,7 @@
+message(STATUS "HOGEHOGE")
+find_package(glm CONFIG REQUIRED)
+add_executable(${PROJECT_NAME}-test )
+target_compile_features(${PROJECT_NAME}-test PRIVATE cxx_std_20)
+target_compile_options (${PROJECT_NAME}-test PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /utf-8>)
+target_sources(${PROJECT_NAME}-test PRIVATE main.cpp)
+target_link_libraries(${PROJECT_NAME}-test PRIVATE glm::glm)
