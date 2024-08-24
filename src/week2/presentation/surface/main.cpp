@@ -52,6 +52,7 @@ inline auto findLayerProperties(const std::vector<VkLayerProperties>& layerProps
 	return false;
 }
 
+// NOTE:
 struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<uint32_t> presentFamily;
@@ -79,6 +80,7 @@ private:
 	VkInstance                 instance = nullptr;
 	VkPhysicalDevice           physicalDevice = nullptr;
 	VkDevice                   device = nullptr;
+	// NOTE:
 	VkSurfaceKHR surface;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
@@ -104,6 +106,7 @@ private:
 
 	void initVulkan() {
 		initInstance();
+		// NOTE:
 		createSurface();
 		selectPhysicalDevice();
 		initDevice();
@@ -126,6 +129,7 @@ private:
 		}
 #endif
 		if (vkDestroyInstance) {
+			// NOTE:
 			vkDestroySurfaceKHR(instance, surface, nullptr);
 			vkDestroyInstance(instance, nullptr);
 		}
@@ -249,6 +253,7 @@ private:
 #endif
 	}
 
+	// NOTE:
 	void createSurface()
 	{
 		vkDestroySurfaceKHR = (PFN_vkDestroySurfaceKHR)vkGetInstanceProcAddr(instance, "vkDestroySurfaceKHR");
@@ -354,6 +359,7 @@ private:
 
 	}
 
+	// NOTE:
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice physDev)
 	{
 		auto vkGetPhysicalDeviceQueueFamilyProperties = (PFN_vkGetPhysicalDeviceQueueFamilyProperties)vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceQueueFamilyProperties");
@@ -428,9 +434,11 @@ private:
 		std::vector<VkQueueFamilyProperties> queueFamilyProps(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProps.data());
 
+		// NOTE:
 		QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 		std::set<uint32_t> uniqueQueueFamilyIndices = { queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value() };
 
+		// NOTE:
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		float queuePriority = 1.0f;
 		for (uint32_t uniqueQueueFamilyindex : uniqueQueueFamilyIndices) {
@@ -460,46 +468,6 @@ private:
 
 		vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
-	}
-
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
-	{
-		for (const auto& availableFormat : availableFormats) {
-			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-				return availableFormat;
-			}
-		}
-
-		return availableFormats[0];
-	}
-
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
-	{
-		for (const auto& availablePresentMode : availablePresentModes) {
-			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-				return availablePresentMode;
-			}
-		}
-
-		return VK_PRESENT_MODE_FIFO_KHR;
-	}
-
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
-	{
-		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-			return capabilities.currentExtent;
-		}
-		else {
-			int width, height;
-			glfwGetFramebufferSize(window, &width, &height);
-
-			VkExtent2D actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
-
-			actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-			actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-			return actualExtent;
-		}
 	}
 };
 
