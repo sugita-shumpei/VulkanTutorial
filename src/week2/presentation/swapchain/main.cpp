@@ -52,6 +52,7 @@ inline auto findLayerProperties(const std::vector<VkLayerProperties>& layerProps
 	return false;
 }
 
+// NOTE:
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
 	std::vector<VkSurfaceFormatKHR> formats;
@@ -88,6 +89,7 @@ private:
 	VkSurfaceKHR surface;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+	// NOTE:
 	VkSwapchainKHR swapChain = nullptr;
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
@@ -98,6 +100,7 @@ private:
 	PFN_vkDestroyInstance      vkDestroyInstance = nullptr;
 	PFN_vkDestroyDevice        vkDestroyDevice = nullptr;
 	PFN_vkDestroySurfaceKHR	   vkDestroySurfaceKHR = nullptr;
+	// NOTE:
 	PFN_vkDestroySwapchainKHR  vkDestroySwapchainKHR = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
@@ -118,6 +121,7 @@ private:
 		createSurface();
 		selectPhysicalDevice();
 		initDevice();
+		// NOTE:
 		createSwapChain();
 	}
 
@@ -128,6 +132,7 @@ private:
 	}
 
 	void cleanup() {
+		// NOTE:
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		if (vkDestroyDevice) {
 			vkDestroyDevice(device, nullptr);
@@ -270,6 +275,7 @@ private:
 		}
 	}
 
+	// NOTE:
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice physDev)
 	{
 		SwapChainSupportDetails details;
@@ -296,6 +302,7 @@ private:
 		return details;
 	}
 
+	// NOTE:
 	bool isDeviceSuitable(VkPhysicalDevice physDev)
 	{
 		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physDev);
@@ -394,6 +401,7 @@ private:
 			}
 		}
 
+		// NOTE:
 		if (physicalDevices.size() > 0 && isDeviceSuitable(physicalDevices[0])) {
 			physicalDevice = physicalDevices[0];
 		}
@@ -512,6 +520,7 @@ private:
 		vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
 	}
 
+	// NOTE:
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 	{
 		for (const auto& availableFormat : availableFormats) {
@@ -523,6 +532,7 @@ private:
 		return availableFormats[0];
 	}
 
+	// NOTE:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
 		for (const auto& availablePresentMode : availablePresentModes) {
@@ -534,6 +544,7 @@ private:
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
+	// NOTE:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
@@ -552,6 +563,7 @@ private:
 		}
 	}
 
+	// NOTE:
 	void createSwapChain()
 	{
 		auto vkCreateSwapchainKHR = (PFN_vkCreateSwapchainKHR)vkGetDeviceProcAddr(device, "vkCreateSwapchainKHR");

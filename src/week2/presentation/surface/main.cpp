@@ -89,6 +89,7 @@ private:
 	PFN_vkGetDeviceProcAddr    vkGetDeviceProcAddr = nullptr;
 	PFN_vkDestroyInstance      vkDestroyInstance = nullptr;
 	PFN_vkDestroyDevice        vkDestroyDevice = nullptr;
+	// NOTE:
 	PFN_vkDestroySurfaceKHR	   vkDestroySurfaceKHR = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
