@@ -92,7 +92,6 @@ private:
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
-	// NOTE:
 	std::vector<VkImageView> swapChainImageViews;
 
 	PFN_vkGetInstanceProcAddr  vkGetInstanceProcAddr = nullptr;
@@ -101,7 +100,6 @@ private:
 	PFN_vkDestroyDevice        vkDestroyDevice = nullptr;
 	PFN_vkDestroySurfaceKHR	   vkDestroySurfaceKHR = nullptr;
 	PFN_vkDestroySwapchainKHR  vkDestroySwapchainKHR = nullptr;
-	// NOTE:
 	PFN_vkDestroyImageView	   vkDestroyImageView = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
@@ -123,8 +121,8 @@ private:
 		selectPhysicalDevice();
 		initDevice();
 		createSwapChain();
-		// NOTE:
 		createImageViews();
+		createGraphicsPipeline();
 	}
 
 	void mainLoop() {
@@ -134,7 +132,6 @@ private:
 	}
 
 	void cleanup() {
-		// NOTE:
 		for (auto imageView : swapChainImageViews) {
 			vkDestroyImageView(device, imageView, nullptr);
 		}
@@ -624,7 +621,6 @@ private:
 		vkDestroySwapchainKHR = (PFN_vkDestroySwapchainKHR)vkGetDeviceProcAddr(device, "vkDestroySwapchainKHR");
 	}
 
-	// NOTE:
 	void createImageViews()
 	{
 		auto vkCreateImageView = (PFN_vkCreateImageView)vkGetDeviceProcAddr(device, "vkCreateImageView");
@@ -653,6 +649,11 @@ private:
 		}
 
 		vkDestroyImageView = (PFN_vkDestroyImageView)vkGetDeviceProcAddr(device, "vkDestroyImageView");
+	}
+
+	void createGraphicsPipeline()
+	{
+
 	}
 };
 
