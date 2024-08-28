@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
+#include <glm/glm.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -13,6 +14,7 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
+#include <array>
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -27,6 +29,39 @@ struct QueueFamilyIndices {
 	bool isComplete()
 	{
 		return graphicsFamily.has_value() && presentFamily.has_value();
+	}
+};
+
+struct Vertex {
+	glm::vec2 pos;
+	glm::vec3 color;
+
+	static VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription{};
+
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		return bindingDescription;
+	}
+
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+	{
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescription{};
+
+		attributeDescription[0].binding = 0;
+		attributeDescription[0].location = 0;
+		attributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescription[0].offset = offsetof(Vertex, pos);
+
+		attributeDescription[1].binding = 0;
+		attributeDescription[1].location = 1;
+		attributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescription[1].offset = offsetof(Vertex, color);
+
+		return attributeDescription;
 	}
 };
 
@@ -113,6 +148,12 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
+const std::vector<Vertex> vertices = {
+	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 class HelloTriangleApplication {
 public:
@@ -814,8 +855,8 @@ private:
 		auto vkCreatePipelineLayout = (PFN_vkCreatePipelineLayout)vkGetDeviceProcAddr(device, "vkCreatePipelineLayout");
 		auto vkCreateGraphicsPipelines = (PFN_vkCreateGraphicsPipelines)vkGetDeviceProcAddr(device, "vkCreateGraphicsPipelines");
 
-		auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/shaders/vert.spv");
-		auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/shaders/frag.spv");
+		auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/vert.spv");
+		auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/frag.spv");
 
 		VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 		VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -836,13 +877,18 @@ private:
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.pVertexBindingDescriptions = nullptr;
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+		auto bindingDescription = Vertex::getBindingDescription();
+		auto attributeDescription = Vertex::getAttributeDescriptions();
+
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
+		vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemby{};
 		inputAssemby.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+
 		inputAssemby.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssemby.primitiveRestartEnable = VK_FALSE;
 
