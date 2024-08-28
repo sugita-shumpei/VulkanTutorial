@@ -8,6 +8,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -212,7 +215,6 @@ private:
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
-	// NOTE:
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
 
@@ -234,7 +236,6 @@ private:
 	PFN_vkDestroyBuffer					vkDestroyBuffer = nullptr;
 	PFN_vkFreeMemory					vkFreeMemory = nullptr;
 	PFN_vkDestroyDescriptorSetLayout	vkDestroyDescriptorSetLayout = nullptr;
-	// NOTE:
 	PFN_vkDestroyDescriptorPool			vkDestroyDescriptorPool = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
@@ -270,10 +271,11 @@ private:
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
+		// NOTE:
+		createTextureImage();
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffers();
-		// NOTE:
 		createDescriptorPool();
 		createDescriptorSets();
 		createCommandBuffers();
@@ -312,7 +314,6 @@ private:
 			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
 		}
 
-		// NOTE:
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
@@ -1160,7 +1161,6 @@ private:
 
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-		// NOTE:
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
@@ -1500,7 +1500,6 @@ private:
 		memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	}
 
-	// NOTE:
 	void createDescriptorPool()
 	{
 		auto vkCreateDescriptorPool = (PFN_vkCreateDescriptorPool)vkGetDeviceProcAddr(device, "vkCreateDescriptorPool");
@@ -1522,7 +1521,6 @@ private:
 		vkDestroyDescriptorPool = (PFN_vkDestroyDescriptorPool)vkGetDeviceProcAddr(device, "vkDestroyDescriptorPool");
 	}
 
-	// NOTE:
 	void createDescriptorSets()
 	{
 		auto vkAllocateDescriptorSets = (PFN_vkAllocateDescriptorSets)vkGetDeviceProcAddr(device, "vkAllocateDescriptorSets");
@@ -1559,6 +1557,12 @@ private:
 
 			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 		}
+	}
+
+	// NOTE:
+	void createTextureImage()
+	{
+
 	}
 };
 
