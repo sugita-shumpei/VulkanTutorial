@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
+// NOTE:
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -15,6 +17,8 @@
 #include <algorithm>
 #include <fstream>
 #include <array>
+// NOTE:
+#include <chrono>
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -191,6 +195,8 @@ private:
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
+	// NOTE:
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -205,24 +211,32 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+	// NOTE:
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<void*> uniformBuffersMapped;
 
-	PFN_vkGetInstanceProcAddr	vkGetInstanceProcAddr = nullptr;
-	PFN_vkGetDeviceProcAddr		vkGetDeviceProcAddr = nullptr;
-	PFN_vkDestroyInstance		vkDestroyInstance = nullptr;
-	PFN_vkDestroyDevice			vkDestroyDevice = nullptr;
-	PFN_vkDestroySurfaceKHR		vkDestroySurfaceKHR = nullptr;
-	PFN_vkDestroySwapchainKHR	vkDestroySwapchainKHR = nullptr;
-	PFN_vkDestroyImageView		vkDestroyImageView = nullptr;
-	PFN_vkDestroyRenderPass		vkDestroyRenderPass = nullptr;
-	PFN_vkDestroyPipelineLayout vkDestroyPipelineLayout = nullptr;
-	PFN_vkDestroyPipeline		vkDestroyPipeline = nullptr;
-	PFN_vkDestroyFramebuffer	vkDestroyFramebuffer = nullptr;
-	PFN_vkDestroyCommandPool	vkDestroyCommandPool = nullptr;
-	PFN_vkDestroySemaphore		vkDestroySemaphore = nullptr;
-	PFN_vkDestroyFence			vkDestroyFence = nullptr;
-	PFN_vkDeviceWaitIdle		vkDeviceWaitIdle = nullptr;
-	PFN_vkDestroyBuffer			vkDestroyBuffer = nullptr;
-	PFN_vkFreeMemory			vkFreeMemory = nullptr;
+	PFN_vkGetInstanceProcAddr			vkGetInstanceProcAddr = nullptr;
+	PFN_vkGetDeviceProcAddr				vkGetDeviceProcAddr = nullptr;
+	PFN_vkDestroyInstance				vkDestroyInstance = nullptr;
+	PFN_vkDestroyDevice					vkDestroyDevice = nullptr;
+	PFN_vkDestroySurfaceKHR				vkDestroySurfaceKHR = nullptr;
+	PFN_vkDestroySwapchainKHR			vkDestroySwapchainKHR = nullptr;
+	PFN_vkDestroyImageView				vkDestroyImageView = nullptr;
+	PFN_vkDestroyRenderPass				vkDestroyRenderPass = nullptr;
+	PFN_vkDestroyPipelineLayout			vkDestroyPipelineLayout = nullptr;
+	PFN_vkDestroyPipeline				vkDestroyPipeline = nullptr;
+	PFN_vkDestroyFramebuffer			vkDestroyFramebuffer = nullptr;
+	PFN_vkDestroyCommandPool			vkDestroyCommandPool = nullptr;
+	PFN_vkDestroySemaphore				vkDestroySemaphore = nullptr;
+	PFN_vkDestroyFence					vkDestroyFence = nullptr;
+	PFN_vkDeviceWaitIdle				vkDeviceWaitIdle = nullptr;
+	PFN_vkDestroyBuffer					vkDestroyBuffer = nullptr;
+	PFN_vkFreeMemory					vkFreeMemory = nullptr;
+	// NOTE:
+	PFN_vkDestroyDescriptorSetLayout	vkDestroyDescriptorSetLayout = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
 	PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
@@ -253,11 +267,15 @@ private:
 		createSwapChain();
 		createImageViews();
 		createRenderPass();
+		// NOTE:
+		createDescriptorSetLayout();
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
 		createVertexBuffer();
 		createIndexBuffer();
+		// NOTE:
+		createUniformBuffers();
 		createCommandBuffers();
 		createSyncObjects();
 
@@ -288,6 +306,15 @@ private:
 
 	void cleanup() {
 		cleanupSwapChain();
+
+		// NOTE:
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+		}
+
+		// NOTE:
+		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		vkDestroyBuffer(device, indexBuffer, nullptr);
 		vkFreeMemory(device, indexBufferMemory, nullptr);
@@ -971,7 +998,9 @@ private:
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.pSetLayouts = nullptr;
+		// NOTE:
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
 		pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -1160,6 +1189,10 @@ private:
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("failed to acquire swap chian image!");
 		}
+
+		// NOTE:
+		// Why do we need call this function here ? (i.e. just before vkResetFences)
+		updateUniformBuffer(currentFrame);
 
 		// Only reset the fence if we are submitting work
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
@@ -1406,6 +1439,65 @@ private:
 
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
+	}
+
+	// NOTE:
+	void createDescriptorSetLayout()
+	{
+		auto vkCreateDescriptorSetLayout = (PFN_vkCreateDescriptorSetLayout)vkGetDeviceProcAddr(device, "vkCreateDescriptorSetLayout");
+
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.descriptorCount = 1;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &uboLayoutBinding;
+
+		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+
+		vkDestroyDescriptorSetLayout = (PFN_vkDestroyDescriptorSetLayout)vkGetDeviceProcAddr(device, "vkCreateDescriptorSetLayout");
+	}
+
+	// NOTE:
+	void createUniformBuffers()
+	{
+		auto vkMapMemory = (PFN_vkMapMemory)vkGetDeviceProcAddr(device, "vkMapMemory");
+
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+		uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+		uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+		uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+			
+			vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+		}
+	}
+
+	// NOTE:
+	void updateUniformBuffer(uint32_t currentImage)
+	{
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+		UniformBufferObject ubo{};
+		ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+		ubo.proj[1][1] *= -1;
+
+		memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	}
 };
 
