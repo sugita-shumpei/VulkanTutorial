@@ -1175,6 +1175,8 @@ private:
 
 		vkDeviceWaitIdle(device);
 
+		cleanupSwapChain();
+
 		createSwapChain();
 		createImageViews();
 		createFramebuffers();
