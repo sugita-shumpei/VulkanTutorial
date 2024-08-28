@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
+#include <glm/glm.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -13,6 +14,7 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
+#include <array>
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -30,6 +32,39 @@ struct QueueFamilyIndices {
 	}
 };
 
+struct Vertex {
+	glm::vec2 pos;
+	glm::vec3 color;
+
+	static VkVertexInputBindingDescription getBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription{};
+
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		return bindingDescription;
+	}
+
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+	{
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescription{};
+
+		attributeDescription[0].binding = 0;
+		attributeDescription[0].location = 0;
+		attributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescription[0].offset = offsetof(Vertex, pos);
+
+		attributeDescription[1].binding = 0;
+		attributeDescription[1].location = 1;
+		attributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescription[1].offset = offsetof(Vertex, color);
+
+		return attributeDescription;
+	}
+};
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -40,6 +75,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 	return VK_FALSE;
 }
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback2(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -114,6 +150,12 @@ const uint32_t HEIGHT = 600;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+const std::vector<Vertex> vertices = {
+	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
+
 class HelloTriangleApplication {
 public:
 	void run() {
@@ -146,8 +188,10 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	uint32_t currentFrame = 0;
-	// NOTE:
 	bool framebufferResized = false;
+	// NOTE:
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 
 	PFN_vkGetInstanceProcAddr	vkGetInstanceProcAddr = nullptr;
 	PFN_vkGetDeviceProcAddr		vkGetDeviceProcAddr = nullptr;
@@ -164,6 +208,9 @@ private:
 	PFN_vkDestroySemaphore		vkDestroySemaphore = nullptr;
 	PFN_vkDestroyFence			vkDestroyFence = nullptr;
 	PFN_vkDeviceWaitIdle		vkDeviceWaitIdle = nullptr;
+	// NOTE:
+	PFN_vkDestroyBuffer			vkDestroyBuffer = nullptr;
+	PFN_vkFreeMemory			vkFreeMemory = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
 	PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
@@ -173,7 +220,6 @@ private:
 		glfwInit();
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		// NOTE:
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
@@ -198,6 +244,8 @@ private:
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
+		// NOTE:
+		createVertexBuffer();
 		createCommandBuffers();
 		createSyncObjects();
 
@@ -205,7 +253,7 @@ private:
 	}
 
 	void mainLoop() {
-		// NOTE*
+		// NOTE:
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
 			drawFrame();
@@ -214,7 +262,6 @@ private:
 		vkDeviceWaitIdle(device);
 	}
 
-	// NOTE:
 	void cleanupSwapChain()
 	{
 		for (auto framebuffer : swapChainFramebuffers) {
@@ -230,6 +277,10 @@ private:
 
 	void cleanup() {
 		cleanupSwapChain();
+
+		// NOTE:
+		vkDestroyBuffer(device, vertexBuffer, nullptr);
+		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -814,8 +865,8 @@ private:
 		auto vkCreatePipelineLayout = (PFN_vkCreatePipelineLayout)vkGetDeviceProcAddr(device, "vkCreatePipelineLayout");
 		auto vkCreateGraphicsPipelines = (PFN_vkCreateGraphicsPipelines)vkGetDeviceProcAddr(device, "vkCreateGraphicsPipelines");
 
-		auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/shaders/vert.spv");
-		auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/shaders/frag.spv");
+		auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/vert.spv");
+		auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/frag.spv");
 
 		VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 		VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -836,13 +887,18 @@ private:
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.pVertexBindingDescriptions = nullptr;
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+		auto bindingDescription = Vertex::getBindingDescription();
+		auto attributeDescription = Vertex::getAttributeDescriptions();
+
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
+		vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemby{};
 		inputAssemby.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+
 		inputAssemby.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssemby.primitiveRestartEnable = VK_FALSE;
 
@@ -1014,6 +1070,7 @@ private:
 		auto vkCmdDraw = (PFN_vkCmdDraw)vkGetDeviceProcAddr(device, "vkCmdDraw");
 		auto vkCmdEndRenderPass = (PFN_vkCmdEndRenderPass)vkGetDeviceProcAddr(device, "vkCmdEndRenderPass");
 		auto vkEndCommandBuffer = (PFN_vkEndCommandBuffer)vkGetDeviceProcAddr(device, "vkEndCommandBuffer");
+		auto vkCmdBindVertexBuffers = (PFN_vkCmdBindVertexBuffers)vkGetDeviceProcAddr(device, "vkCmdBindVertexBuffers");
 
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1052,7 +1109,12 @@ private:
 		scissor.extent = swapChainExtent;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+		// NOTE:
+		VkBuffer vertexBuffers[] = { vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+		vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
 
@@ -1073,7 +1135,6 @@ private:
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 		uint32_t imageIndex;
-		// NOTE:
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -1084,7 +1145,6 @@ private:
 			throw std::runtime_error("failed to acquire swap chian image!");
 		}
 
-		// NOTE:
 		// Only reset the fence if we are submitting work
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
@@ -1122,7 +1182,6 @@ private:
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr;
 
-		// NOTE:
 		result = vkQueuePresentKHR(presentQueue, &presentInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
 			framebufferResized = false;
@@ -1163,7 +1222,6 @@ private:
 		vkDestroyFence = (PFN_vkDestroyFence)vkGetDeviceProcAddr(device, "vkDestroyFence");
 	}
 
-	// NOTE:
 	void recreateSwapChain()
 	{
 		int width = 0, height = 0;
@@ -1180,6 +1238,64 @@ private:
 		createSwapChain();
 		createImageViews();
 		createFramebuffers();
+	}
+
+	void createVertexBuffer()
+	{
+		auto vkCreateBuffer = (PFN_vkCreateBuffer)vkGetDeviceProcAddr(device, "vkCreateBuffer");
+		auto vkGetBufferMemoryRequirements = (PFN_vkGetBufferMemoryRequirements)vkGetDeviceProcAddr(device, "vkGetBufferMemoryRequirements");
+		auto vkAllocateMemory = (PFN_vkAllocateMemory)vkGetDeviceProcAddr(device, "vkAllocateMemory");
+		auto vkBindBufferMemory = (PFN_vkBindBufferMemory)vkGetDeviceProcAddr(device, "vkBindBufferMemory");
+		auto vkMapMemory = (PFN_vkMapMemory)vkGetDeviceProcAddr(device, "vkMapMemory");
+		auto vkUnmapMemory = (PFN_vkUnmapMemory)vkGetDeviceProcAddr(device, "vkUnmapMemory");
+
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create vertex buffer!");
+		}
+
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate vertex buffer memory!");
+		}
+
+		vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+
+		void* data;
+		vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+		memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+		vkUnmapMemory(device, vertexBufferMemory);
+
+		vkDestroyBuffer = (PFN_vkDestroyBuffer)vkGetDeviceProcAddr(device, "vkDestroyBuffer");
+		vkFreeMemory = (PFN_vkFreeMemory)vkGetDeviceProcAddr(device, "vkFreeMemory");
+	}
+
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+	{
+		auto vkGetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceMemoryProperties");
+
+		VkPhysicalDeviceMemoryProperties memProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+			if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+				return i;
+			}
+		}
+
+		throw std::runtime_error("failed to find memory type!");
 	}
 };
 
