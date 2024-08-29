@@ -1,8 +1,10 @@
 #define GLFW_INCLUDE_VULKAN
 #define VK_NO_PROTOTYPES
+#include "config.h"
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
+
 
 #include <iostream>
 // note
@@ -14,6 +16,7 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -44,7 +47,6 @@ inline auto findExtensionProperties(const std::vector<VkExtensionProperties>& ex
 	}
 	return false;
 }
-
 inline auto findLayerProperties(const std::vector<VkLayerProperties>& layerProps, const char* name) {
 	for (auto& layerProp : layerProps) {
 		if (strcmp(layerProp.layerName, name) == 0) {
@@ -53,11 +55,42 @@ inline auto findLayerProperties(const std::vector<VkLayerProperties>& layerProps
 	}
 	return false;
 }
+inline auto findQueueFamilyIndices(const std::vector<VkQueueFamilyProperties>& queueFamilyProps, VkQueueFlags requiredFlags, VkQueueFlags disallowedFlags) -> std::vector<uint32_t> {
+	std::vector<uint32_t> indices;
+	for (uint32_t i = 0; i < queueFamilyProps.size(); i++) {
+		if ((queueFamilyProps[i].queueFlags & requiredFlags) == requiredFlags &&
+			(queueFamilyProps[i].queueFlags & disallowedFlags) == 0) {
+			indices.push_back(i);
+		}
+	}
+	return indices;
+}
+inline auto findQueueFamilyIndices(
+	VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR,
+	const std::vector<VkQueueFamilyProperties>& queueFamilyProps, VkQueueFlags requiredFlags, VkQueueFlags disallowedFlags) -> std::vector<uint32_t> {
+	std::vector<uint32_t> indices;
+	for (uint32_t i = 0; i < queueFamilyProps.size(); i++) {
+		if ((queueFamilyProps[i].queueFlags & requiredFlags) == requiredFlags &&
+			(queueFamilyProps[i].queueFlags & disallowedFlags) == 0) {
+			if (!surface) {
+				indices.push_back(i);
+			}
+			else {
+				VkBool32 presentSupport = false;
+				vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+				if (presentSupport) {
+					indices.push_back(i);
+				}
+			}
+		}
+	}
+	return indices;
+}
 
 struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
+	VkSurfaceCapabilitiesKHR        capabilities;
 	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
+	std::vector<VkPresentModeKHR>   presentModes;
 };
 
 struct QueueFamilyIndices {
@@ -119,7 +152,7 @@ private:
 		glfwInit();
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE , GLFW_FALSE);
 
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 	}
@@ -662,8 +695,8 @@ private:
 	}
 
 	void createGraphicsPipeline() {
-		auto vertShaderCode = readFile("shader/vert.spv");
-		auto fragShaderCode = readFile("shader/frag.spv");
+		auto vertShaderCode = readFile(SHADER_ROOT_DIR"/shader.vert.spv");
+		auto fragShaderCode = readFile(SHADER_ROOT_DIR"/shader.frag.spv");
 
 		vertShaderModule = createShaderModule(vertShaderCode);
 		fragShaderModule = createShaderModule(fragShaderCode);
