@@ -124,14 +124,16 @@ private:
 			vkDestroyDevice(device, nullptr);
 
 		}
+		if (vkDestroySurfaceKHR) {
+			// NOTE:
+			vkDestroySurfaceKHR(instance, surface, nullptr);
+		}
 #ifndef NDEBUG
 		if (vkDestroyDebugUtilsMessengerEXT) {
 			vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 #endif
 		if (vkDestroyInstance) {
-			// NOTE:
-			vkDestroySurfaceKHR(instance, surface, nullptr);
 			vkDestroyInstance(instance, nullptr);
 		}
 		glfwDestroyWindow(window);
