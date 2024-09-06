@@ -314,6 +314,7 @@ private:
 	void cleanup() {
 		cleanupSwapChain();
 
+		// NOTE:
 		vkDestroyImage(device, textureImage, nullptr);
 		vkFreeMemory(device, textureImageMemory, nullptr);
 
