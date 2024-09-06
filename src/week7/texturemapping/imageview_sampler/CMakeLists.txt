@@ -8,4 +8,4 @@ target_compile_features(${PROJECT_NAME}-week7-texturemapping-imageview_sampler P
 target_compile_options (${PROJECT_NAME}-week7-texturemapping-imageview_sampler PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /utf-8>)
 target_sources ( ${PROJECT_NAME}-week7-texturemapping-imageview_sampler PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp )
 target_link_libraries( ${PROJECT_NAME}-week7-texturemapping-imageview_sampler PRIVATE Vulkan::Vulkan glm::glm glfw  )
-target_include_directories(${PROJECT_NAME}-week7-texturemapping-images PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../external)
+target_include_directories(${PROJECT_NAME}-week7-texturemapping-imageview_sampler PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../external)
