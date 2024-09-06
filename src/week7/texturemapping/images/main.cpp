@@ -1382,7 +1382,9 @@ private:
 		auto vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)vkGetDeviceProcAddr(device, "vkCmdCopyBuffer");
 
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
 		VkBufferCopy copyRegion{};
+		copyRegion.size = size;
 		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
 		endSingleTimeCommands(commandBuffer);
@@ -1566,6 +1568,9 @@ private:
 		copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 		transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+		vkDestroyBuffer = (PFN_vkDestroyBuffer)vkGetDeviceProcAddr(device, "vkDestroyBuffer");
+		vkFreeMemory = (PFN_vkFreeMemory)vkGetDeviceProcAddr(device, "vkFreeMemory");
+
 		vkDestroyBuffer(device, stagingBuffer, nullptr);
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
@@ -1668,8 +1673,6 @@ private:
 
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
-		endSingleTimeCommands(commandBuffer);
-
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = oldLayout;
@@ -1707,6 +1710,8 @@ private:
 		}
 
 		vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		endSingleTimeCommands(commandBuffer);
 	}
 
 	// NOTE:
@@ -1715,8 +1720,6 @@ private:
 		auto vkCmdCopyBufferToImage = (PFN_vkCmdCopyBufferToImage)vkGetDeviceProcAddr(device, "vkCmdCopyBufferToImage");
 
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-		endSingleTimeCommands(commandBuffer);
 
 		VkBufferImageCopy region{};
 		region.bufferOffset = 0;
@@ -1732,6 +1735,8 @@ private:
 		region.imageExtent = { width, height, 1 };
 
 		vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		endSingleTimeCommands(commandBuffer);
 	}
 };
 
