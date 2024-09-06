@@ -217,7 +217,6 @@ private:
 	std::vector<void*> uniformBuffersMapped;
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
-	// NOTE:
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
 
@@ -240,7 +239,6 @@ private:
 	PFN_vkFreeMemory					vkFreeMemory = nullptr;
 	PFN_vkDestroyDescriptorSetLayout	vkDestroyDescriptorSetLayout = nullptr;
 	PFN_vkDestroyDescriptorPool			vkDestroyDescriptorPool = nullptr;
-	// NOTE:
 	PFN_vkDestroyImage					vkDestroyImage = nullptr;
 #ifndef NDEBUG
 	VkDebugUtilsMessengerEXT            debugMessenger = nullptr;
@@ -276,7 +274,6 @@ private:
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
-		// NOTE:
 		createTextureImage();
 		createVertexBuffer();
 		createIndexBuffer();
@@ -1378,7 +1375,6 @@ private:
 
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 	{
-		// NOTE:
 		auto vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)vkGetDeviceProcAddr(device, "vkCmdCopyBuffer");
 
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -1537,7 +1533,6 @@ private:
 		}
 	}
 
-	// NOTE:
 	void createTextureImage()
 	{
 		auto vkMapMemory = (PFN_vkMapMemory)vkGetDeviceProcAddr(device, "vkMapMemory");
@@ -1575,7 +1570,6 @@ private:
 		vkFreeMemory(device, stagingBufferMemory, nullptr);
 	}
 
-	// NOTE:
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 	{
 		auto vkCreateImage = (PFN_vkCreateImage)vkGetDeviceProcAddr(device, "vkCreateImage");
@@ -1620,7 +1614,6 @@ private:
 		vkDestroyImage = (PFN_vkDestroyImage)vkGetDeviceProcAddr(device, "vkDestroyImage");
 	}
 
-	// NOTE:
 	VkCommandBuffer beginSingleTimeCommands()
 	{
 		auto vkAllocateCommandBuffers = (PFN_vkAllocateCommandBuffers)vkGetDeviceProcAddr(device, "vkAllocateCommandBuffers");
@@ -1644,7 +1637,6 @@ private:
 		return commandBuffer;
 	}
 
-	// NOTE:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer)
 	{
 		auto vkEndCommandBuffer = (PFN_vkEndCommandBuffer)vkGetDeviceProcAddr(device, "vkEndCommandBuffer");
@@ -1666,7 +1658,6 @@ private:
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
-	/// NOTE:
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		auto vkCmdPipelineBarrier = (PFN_vkCmdPipelineBarrier)vkGetDeviceProcAddr(device, "vkCmdPipelineBarrier");
@@ -1714,7 +1705,6 @@ private:
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	// NOTE:
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		auto vkCmdCopyBufferToImage = (PFN_vkCmdCopyBufferToImage)vkGetDeviceProcAddr(device, "vkCmdCopyBufferToImage");
