@@ -1,3 +1,0 @@
-add_subdirectory(images)
-add_subdirectory(imageview_sampler)
-add_subdirectory(combined_image_sampler)
