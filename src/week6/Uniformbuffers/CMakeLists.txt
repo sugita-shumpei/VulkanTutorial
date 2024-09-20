@@ -1,0 +1,3 @@
+add_subdirectory(DescriptorLayoutAndBuffer)
+add_subdirectory(DescriptorPoolAndSets)
+message(STATUS "DescriptorLayoutAndBuffer")
