@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <fstream>
 #include <array>
+#include <config.h>
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -860,8 +861,8 @@ private:
 		auto vkCreatePipelineLayout = (PFN_vkCreatePipelineLayout)vkGetDeviceProcAddr(device, "vkCreatePipelineLayout");
 		auto vkCreateGraphicsPipelines = (PFN_vkCreateGraphicsPipelines)vkGetDeviceProcAddr(device, "vkCreateGraphicsPipelines");
 
-		auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/vert.spv");
-		auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/frag.spv");
+		auto vertShaderCode = readFile(WEEK5_SHADER_ROOT"/vert.spv");
+		auto fragShaderCode = readFile(WEEK5_SHADER_ROOT"/frag.spv");
 
 		VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 		VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

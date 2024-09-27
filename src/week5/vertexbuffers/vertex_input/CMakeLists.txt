@@ -7,3 +7,5 @@ target_compile_features(${PROJECT_NAME}-week5-vertexbuffers-vertex_input PRIVATE
 target_compile_options (${PROJECT_NAME}-week5-vertexbuffers-vertex_input PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /utf-8>)
 target_sources ( ${PROJECT_NAME}-week5-vertexbuffers-vertex_input PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp )
 target_link_libraries( ${PROJECT_NAME}-week5-vertexbuffers-vertex_input PRIVATE Vulkan::Vulkan glm::glm glfw  )
+target_include_directories( ${PROJECT_NAME}-week5-vertexbuffers-vertex_input PRIVATE ${WEEK5_SHADER_ROOT} )
+add_dependencies( ${PROJECT_NAME}-week5-vertexbuffers-vertex_input ${PROJECT_NAME}-week5-compile-shaders )

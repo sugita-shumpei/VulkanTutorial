@@ -15,6 +15,7 @@
 #include <array>
 #include <optional>
 #include <set>
+#include <config.h>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -505,8 +506,8 @@ private:
     }
 
     void createGraphicsPipeline() {
-        auto vertShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/vert.spv");
-        auto fragShaderCode = readFile("C:/projects/MyVulkanTutorial/MyVulkanTutorial/src/week5/shaders/frag.spv");
+        auto vertShaderCode = readFile(WEEK5_SHADER_ROOT"/vert.spv");
+        auto fragShaderCode = readFile(WEEK5_SHADER_ROOT"/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

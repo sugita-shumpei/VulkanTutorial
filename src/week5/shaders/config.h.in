@@ -1,0 +1,2 @@
+#pragma once
+#cmakedefine WEEK5_SHADER_ROOT "@WEEK5_SHADER_ROOT@"
