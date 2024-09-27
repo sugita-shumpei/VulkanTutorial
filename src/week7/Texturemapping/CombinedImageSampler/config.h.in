@@ -1,0 +1,3 @@
+#pragma once
+#cmakedefine SHADER_ROOT_DIR "@SHADER_ROOT_DIR@"
+#cmakedefine ASSETS_ROOT_DIR "@ASSETS_ROOT_DIR@"

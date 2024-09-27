@@ -1,7 +1,8 @@
 {
   "dependencies": [
     "glfw3",
-    "glm"
+    "glm",
+    "stb"
   ],
   "builtin-baseline": "acfe7e6f236f8048a8a7929b1c5ffdad8d492786"
 }
