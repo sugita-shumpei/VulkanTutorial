@@ -1,1 +1,2 @@
-add_subdirectory(drawing)
+add_subdirectory(Drawing)
+add_subdirectory(SwapchainRecreation)

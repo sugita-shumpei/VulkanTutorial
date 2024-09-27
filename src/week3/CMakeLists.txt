@@ -1,1 +1,1 @@
-add_subdirectory(graphicspipeline)
+add_subdirectory(GraphicsPipelineBasics)
